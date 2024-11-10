@@ -1,6 +1,7 @@
 #!/bin/bash
 # Convert Markdown to Wordpress blogging format
 
+ls -a
 
 # Display usage if no parameters given
 if [[ -z "$@" ]]; then
