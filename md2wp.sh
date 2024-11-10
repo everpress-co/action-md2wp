@@ -1,12 +1,6 @@
 #!/bin/bash
 # Convert Markdown to Wordpress blogging format
 
-# Required program(s)
-req_progs=(ascii2uni pandoc)
-for p in ${req_progs[@]}; do
-  hash "$p" 2>&- || \
-  { echo >&2 " Required program \"$p\" not installed."; exit 1; }
-done
 
 # Display usage if no parameters given
 if [[ -z "$@" ]]; then
