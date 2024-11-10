@@ -1,0 +1,9 @@
+name: 'WordPress Readme to Markdown'
+description: 'Converts a README.md to a Wordpress readme.txt'
+author: 'EverPress'
+runs:
+  using: 'composite'
+  steps:
+    - id: md2wp
+      run: ${{ github.action_path }}/md2wp.sh
+      shell: bash
