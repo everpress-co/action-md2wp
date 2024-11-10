@@ -3,6 +3,11 @@
 
 ls -a
 
+#find all md files
+md=find . -name "*.md" -print
+
+echo $md
+
 # Display usage if no parameters given
 if [[ -z "$@" ]]; then
   echo " ${0##*/} <file.md> - convert Markdown to Wordpress blogging format"
