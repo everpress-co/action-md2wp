@@ -1,94 +1,45 @@
 #!/bin/bash
-# Convert Markdown to Wordpress blogging format
 
-ls -a
-
-#find all md files
-md=find . -name "*.md" -print
-
-echo $md
-
-# Display usage if no parameters given
-if [[ -z "$@" ]]; then
-  echo " ${0##*/} <file.md> - convert Markdown to Wordpress blogging format"
-  exit
+# Check if README.md exists
+if [ ! -f "README.md" ]; then
+    echo "README.md file not found!"
+    exit 1
 fi
 
-# Check if selection exists
-for f in "$@"; do
-  [ ! -f "$f" ] && echo " Selection \""$f"\" does not exist." && exit
-done
+# Define output file
+OUTPUT_FILE="readme.txt"
 
-# Convert
-for md in "$@"; do
-  file_html="${md%.*}".htm
-  file_wdpr="${md%.*}".wdp
+# Initialize output file
+echo "Generating $OUTPUT_FILE..."
 
-  ## Convert to HTML
-  pandoc "$md" -o /tmp/"$file_html"  && echo " Converted to HTML."
+# Read the README.md file line by line
+while IFS= read -r line; do
 
-  ## Convert HTML entities to UTF8
-  ascii2uni -a Y /tmp/"$file_html" -q > "$file_wdpr"  && \
-  echo " Converted HTML entities to UTF8."
+    # Convert # Headers
+    if [[ $line == '### '* ]]; then
+        echo "= ${line:4} =" >> "$OUTPUT_FILE"
+    elif [[ $line == '## '* ]]; then
+        echo "== ${line:3} ==" >> "$OUTPUT_FILE"
+    elif [[ $line == '# '* ]]; then
+        echo "=== ${line:2} ===" >> "$OUTPUT_FILE"
 
-  # Clean up code
-  code_clnp () {
+    # Add a blank line for better readability
+    elif [[ -z "$line" ]]; then
+        echo "" >> "$OUTPUT_FILE"
+    
+    # Otherwise, print the line as-is
+    else
+        echo "$line" >> "$OUTPUT_FILE"
+    fi
 
-  ## Code blocks
+done < README.md
 
-  # Remove four space after <code> and during code blocks (fix for Gedit
-  # having to use eight spaces for syntax recognition of code lines)
-  sed -i 's/<code>    /<code>/g' "$file_wdpr"
-  sed -i 's/^    //g'            "$file_wdpr"
+# Add Tags and License if they don’t already exist in the output
+if ! grep -q "Tags:" $OUTPUT_FILE; then
+    echo -e "\nTags: tag1, tag2, tag3" >> "$OUTPUT_FILE"
+fi
+if ! grep -q "License:" $OUTPUT_FILE; then
+    echo "License: GPLv2 or later" >> "$OUTPUT_FILE"
+fi
 
-  # Only <pre> tags necessary (i.e. not <pre><code>)
-  sed -i 's|\(<pre*>\)<code>|\1|g' "$file_wdpr"
-  sed -i 's|</code></pre>|</pre>|g' "$file_wdpr"
-
-  # Use custom pre tag
-  #sed -i 's|<pre*>|<pre style="overflow:auto;width=auto;border:solid #A4DEA4;border-width:.1em .1em .1em .6em;padding:.2em .4em .2em .6em;background-color:#F0FAF0;font-size:1em;white-space:pre;">|g' "$file_wdpr"
-
-  ## Newlines
-
-  # Newline after pre
-  #sed -i 's|</pre>|</pre>\n|g'     "$file_wdpr"
-
-  # Ensure blankline after code blocks
-  sed -i -e ':a;N;$!ba;s|</pre>*\n\(.\{1\}\)|</pre>\n\n\1|g' "$file_wdpr"
-
-  # Newline after headers
-  sed -i 's/\(^<h[1-5].*\)/\1\n/g' "$file_wdpr"
-
-  # Remove paragraph tags, newline after
-  sed -i 's/<p>//g'    "$file_wdpr"
-  sed -i 's|</p>|\n|g' "$file_wdpr"
-
-  # Remove breaks
-  sed -i 's/<br>//g'   "$file_wdpr"
-
-  # Ensure blankline after lists
-  sed -i -e ':a;N;$!ba;s|</ol>*\n\(.\{1\}\)|</ol>\n\n\1|g' "$file_wdpr"
-  sed -i -e ':a;N;$!ba;s|</ul>*\n\(.\{1\}\)|</ul>\n\n\1|g' "$file_wdpr"
-  
-  # Ensure blankline after tables
-  sed -i -e ':a;N;$!ba;s|</table>*\n\(.\{1\}\)|</table>\n\n\1|g' "$file_wdpr"
-  
-  ## Cleanup
-
-  # Remove vim settings
-  sed -i '/^<!-- vim:/d' "$file_wdpr"
-
-  # Delete first line if blank
-  sed -i '1{/^$/d}' "$file_wdpr"
-
-  # Remove trailing blank lines
-  while [ "$(tail -n 1 "$file_wdpr")" == "" ]; do
-    sed -i '$d'  "$file_wdpr"
-  done
-
-  # Delete final newline
-  perl -i -e 'local $/; $_ = <>; s/\n$//; print' "$file_wdpr"
-  }
-  
-  code_clnp && echo " Cleaned up formating."
-done
+echo "Conversion complete. Check $OUTPUT_FILE for the results."
